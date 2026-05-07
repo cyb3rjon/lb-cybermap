@@ -6,7 +6,8 @@
   "description": "Internal cybersecurity maturity assessment platform — NIST CSF 2.0, CIS Controls v8.1.2, NCSC CAF 4.0",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "typecheck": "tsc --noEmit",
+    "build": "vite build && node -e \"require('fs').copyFileSync('dist/index.html','dist/404.html')\"",
     "preview": "vite preview",
     "lint": "eslint src --ext ts,tsx"
   },
