@@ -29,7 +29,7 @@ export function Sidebar() {
         </div>
         <div>
           <div className="text-[15px] font-bold tracking-tight text-white leading-none">LB CyberMAP</div>
-          <div className="text-[10px] tracking-[0.18em] uppercase text-slate-400 mt-1">Maturity Assessment</div>
+          <div className="text-[9px] tracking-[0.16em] uppercase text-slate-400 mt-1 leading-tight">Cyber Maturity<br/>Assessment Platform</div>
         </div>
       </div>
 

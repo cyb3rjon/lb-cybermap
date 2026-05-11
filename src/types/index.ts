@@ -101,6 +101,7 @@ export interface BusinessFootprint {
   regulatoryRegimes: string[];
   criticalProcesses: string[];
   dataClassifications: string[];
+  notes?: string;
 }
 
 export interface TechFootprint {
@@ -111,6 +112,7 @@ export interface TechFootprint {
   internetFacingAssets: number;
   saasApps: number;
   ot: boolean;
+  notes?: string;
 }
 
 export interface QASignOff {
@@ -284,7 +286,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  role: 'Admin' | 'Senior Consultant' | 'Lead Assessor' | 'Assessor' | 'Reviewer' | 'Read-only';
+  role: 'Engagement Manager' | 'Senior Consultant' | 'Consultant' | 'Associate';
   initials: string;
   avatarColour: string;
 }

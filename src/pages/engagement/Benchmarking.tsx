@@ -10,7 +10,7 @@ import { BenchmarkBars } from '@/components/charts/BenchmarkBars';
 import { PercentileBand } from '@/components/charts/PercentileBand';
 import { YoyTrend } from '@/components/charts/YoyTrend';
 import { buildRadarSeries, buildBenchmarkSeries, overallAverage } from '@/lib/aggregations';
-import { findBenchmark } from '@/data/mock-benchmarks';
+import { findBenchmark, cohortAverage as cohortAvgFromBench } from '@/data/mock-benchmarks';
 import { FRAMEWORKS } from '@/data/frameworks';
 
 export default function EngagementBenchmarking() {
@@ -59,7 +59,9 @@ export default function EngagementBenchmarking() {
   const ranking = peers.filter((p) => p.overall > myOverall).length + 1;
   const totalRanked = peers.length + 1;
   const percentile = totalRanked > 1 ? Math.round((1 - (ranking - 1) / totalRanked) * 100) : 50;
-  const cohortAverage = bm ? Object.values(bm.averageByGroup).reduce((a, b) => a + b, 0) / Object.values(bm.averageByGroup).length : 0;
+  const cohortAvg = cohortAvgFromBench(bm);
+  const cohortAverage = cohortAvg ?? 0;
+  const hasCohort = cohortAvg !== null;
 
   if (!eng || !client) return null;
 
@@ -82,8 +84,8 @@ export default function EngagementBenchmarking() {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Stat label="Overall maturity" value={myOverall.toFixed(1)} sub="/ 5" tone="accent" />
-        <Stat label="Cohort average" value={cohortAverage.toFixed(1)} sub="/ 5" tone="muted" />
-        <Stat label="Gap to cohort" value={(myOverall - cohortAverage).toFixed(1)} sub="" tone={myOverall >= cohortAverage ? 'ok' : 'warn'} icon={myOverall >= cohortAverage ? TrendingUp : TrendingDown} />
+        <Stat label="Cohort average" value={hasCohort ? cohortAverage.toFixed(1) : '—'} sub={hasCohort ? '/ 5' : 'no cohort data'} tone="muted" />
+        <Stat label="Gap to cohort" value={hasCohort ? (myOverall - cohortAverage).toFixed(1) : '—'} sub="" tone={hasCohort ? (myOverall >= cohortAverage ? 'ok' : 'warn') : 'muted'} icon={hasCohort ? (myOverall >= cohortAverage ? TrendingUp : TrendingDown) : undefined} />
         <Stat label="Percentile rank" value={`${percentile}`} sub={`th of ${totalRanked}`} tone="cyan" icon={Award} />
       </div>
 

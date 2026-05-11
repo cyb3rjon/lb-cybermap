@@ -21,7 +21,7 @@ export default function NewEngagement() {
   const [framework, setFramework] = useState<FrameworkId>('NIST_CSF_2_0');
   const [igTier, setIgTier] = useState<IGTier | ''>('');
   const [year, setYear] = useState(new Date().getFullYear());
-  const [leadAssessor, setLeadAssessor] = useState(users.find((u) => u.role === 'Senior Consultant')?.id || users.find((u) => u.role === 'Lead Assessor')?.id || users[0].id);
+  const [leadAssessor, setLeadAssessor] = useState(users.find((u) => u.role === 'Senior Consultant')?.id || users.find((u) => u.role === 'Engagement Manager')?.id || users[0].id);
   const [team, setTeam] = useState<string[]>([leadAssessor]);
   const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 10));
   const [targetEndDate, setTargetEndDate] = useState(new Date(Date.now() + 90 * 86400000).toISOString().slice(0, 10));
@@ -159,7 +159,7 @@ export default function NewEngagement() {
                   label="Lead assessor"
                   value={leadAssessor}
                   onChange={(e) => setLeadAssessor(e.target.value)}
-                  options={users.filter((u) => u.role === 'Senior Consultant' || u.role === 'Lead Assessor' || u.role === 'Admin').map((u) => ({ value: u.id, label: `${u.name} — ${u.role}` }))}
+                  options={users.filter((u) => u.role === 'Senior Consultant' || u.role === 'Engagement Manager').map((u) => ({ value: u.id, label: `${u.name} — ${u.role}` }))}
                 />
                 <Input
                   label="Year"

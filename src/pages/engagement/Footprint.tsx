@@ -32,6 +32,11 @@ export default function Footprint() {
         <Section icon={<Database size={13} />} label="Data classifications">
           <Pills items={bf.dataClassifications} tone="muted" />
         </Section>
+        {bf.notes && (
+          <Section icon={<Building2 size={13} />} label="Additional notes">
+            <p className="text-sm text-slate-300 leading-relaxed whitespace-pre-line">{bf.notes}</p>
+          </Section>
+        )}
       </Card>
 
       <Card elevated>
@@ -48,6 +53,11 @@ export default function Footprint() {
           <Stat label="SaaS apps" value={tf.saasApps.toString()} icon={<Cloud size={13} />} />
           <Stat label="OT in scope" value={tf.ot ? 'Yes' : 'No'} icon={<Building2 size={13} />} />
         </div>
+        {tf.notes && (
+          <Section icon={<Cloud size={13} />} label="Additional notes">
+            <p className="text-sm text-slate-300 leading-relaxed whitespace-pre-line">{tf.notes}</p>
+          </Section>
+        )}
       </Card>
     </div>
   );

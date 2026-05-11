@@ -169,6 +169,24 @@ export const FINDINGS_BY_THEME: Record<Theme, Finding[]> = {
         successCriteria: ['Group Risk and CISO sign off the converged taxonomy', 'GRC tooling reflects the converged scale within one quarter'],
       },
     },
+    {
+      observation: {
+        title: 'Threat intelligence not consistently fed into risk register updates',
+        severity: 'Medium',
+        body: `Threat intelligence is consumed by the SOC for detection content and tactical response, but is not systematically reviewed by the risk function to update inherent likelihood scores on the risk register. Recent material developments — sector-targeted ransomware activity affecting two close peers, a critical vulnerability in a widely-deployed platform across the estate — were not reflected in any risk re-scoring.`,
+      },
+      risk: {
+        title: 'Risk register becomes stale relative to current threat landscape',
+        impact: 3, likelihood: 3, treatment: 'Mitigate',
+        description: `Without periodic threat-intelligence-driven re-scoring, the risk register reflects a point-in-time snapshot rather than current reality. The realistic exposure is that mitigation prioritisation lags emerging threats by 6–12 months, with material exposures held in the register at an out-of-date severity.`,
+      },
+      recommendation: {
+        title: 'Embed threat intelligence review into the monthly risk forum',
+        priority: 'P3', effort: 'S', costBand: '<£25k', horizon: '0–3m',
+        description: `Add a standing agenda item to the monthly risk forum: review of material threat intelligence developments and proposed re-scoring of affected register entries. Maintain a documented audit trail of decisions.`,
+        successCriteria: ['Monthly threat-intelligence-led re-scoring evidenced for two consecutive quarters', 'Audit trail of decisions linked to specific intelligence references'],
+      },
+    },
   ],
   'Asset Management': [
     {
@@ -232,6 +250,24 @@ export const FINDINGS_BY_THEME: Record<Theme, Finding[]> = {
         successCriteria: ['All inherited suppliers re-tiered within 4 months', '100% of tier-1 inherited suppliers re-assessed within 6 months'],
       },
     },
+    {
+      observation: {
+        title: 'Contract security clauses inconsistent across supplier base',
+        severity: 'Medium',
+        body: `Sample review of 20 supplier contracts found significant inconsistency in security clauses. Older contracts (>3 years) typically lack breach notification timelines, audit rights, and sub-processor change controls. Newer contracts since 2024 use a standard schedule but it is not retroactively applied at renewal. Procurement teams confirmed they do not have a triggered review at contract renewal to upgrade legacy security terms.`,
+      },
+      risk: {
+        title: 'Inadequate contractual leverage to enforce supplier security',
+        impact: 3, likelihood: 4, treatment: 'Mitigate',
+        description: `Without consistent contractual security clauses, the firm has limited recourse to enforce baseline security expectations on suppliers, audit their controls, or be informed of incidents in a timely manner. Realistic exposure is an incident occurring at a supplier with material data access where notification arrives too late for effective response.`,
+      },
+      recommendation: {
+        title: 'Standardise contract security schedule and apply at renewal',
+        priority: 'P3', effort: 'M', costBand: '£25–100k', horizon: '3–6m',
+        description: `Ratify a Group-wide supplier security schedule covering: breach notification SLAs, audit rights, sub-processor change controls, evidence retention, and exit obligations. Embed a renewal-trigger in the contract lifecycle tool to apply the schedule at each renewal event.`,
+        successCriteria: ['Group security schedule ratified', 'Applied to 100% of tier-1 supplier renewals within 12 months'],
+      },
+    },
   ],
   Identity: [
     {
@@ -293,6 +329,24 @@ export const FINDINGS_BY_THEME: Record<Theme, Finding[]> = {
         description: `Deploy differentiated content for privileged administrators, finance approvers and executive assistants, including scenario-based modules and quarterly bite-sized refreshers. Track behavioural metrics — phishing reporting rate, privileged action anomaly rate, secure email usage — alongside the existing click-through metrics. Introduce a recognition scheme for users who consistently report genuine phishing attempts.`,
         benefits: 'Targets the populations where social engineering carries disproportionate impact; introduces leading indicators of culture beyond click-through.',
         successCriteria: ['Role-based content live for three populations', 'Reporting rate metric established and improving for two consecutive quarters'],
+      },
+    },
+    {
+      observation: {
+        title: 'Security culture survey not conducted; behavioural drivers unknown',
+        severity: 'Low',
+        body: `The awareness programme is operated on a delivery-based metric set (completion %, click-through %) without any structured measurement of the underlying culture (psychological safety to report, perceived management commitment, ease of doing the secure thing). No security culture survey has been conducted.`,
+      },
+      risk: {
+        title: 'Cultural blockers to secure behaviour persist undetected',
+        impact: 2, likelihood: 3, treatment: 'Mitigate',
+        description: `Without cultural measurement, programme investment is directed by activity metrics rather than the actual blockers to secure behaviour. The realistic exposure is sustained investment that does not address the most material cultural friction.`,
+      },
+      recommendation: {
+        title: 'Run an annual security culture survey aligned to a published framework',
+        priority: 'P4', effort: 'S', costBand: '<£25k', horizon: '0–3m',
+        description: `Run an annual security culture survey using a validated instrument (e.g. SANS Security Culture Framework). Compare against industry benchmarks. Use survey output to direct awareness programme investment and inform the leadership communications plan.`,
+        successCriteria: ['First survey completed with ≥50% response rate', 'Findings translated into prioritised awareness backlog'],
       },
     },
   ],
@@ -397,6 +451,24 @@ export const FINDINGS_BY_THEME: Record<Theme, Finding[]> = {
         successCriteria: ['Two full-scope live exercises completed in year one', 'Verified RTO recorded for every tier-1 platform', 'Immutable backup chain assumption validated and documented'],
       },
     },
+    {
+      observation: {
+        title: 'Network segmentation between corporate and OT/production segments insufficient',
+        severity: 'High',
+        body: `Network architecture review identified that the boundary between corporate IT and production OT segments relies on flat firewall rule-sets rather than enforced east-west segmentation. Audit of firewall policy shows over-broad allow rules between segments that have accreted over time, including some "any-any" rules with stated justifications that no longer apply.`,
+      },
+      risk: {
+        title: 'Lateral movement from corporate IT into production with material impact',
+        impact: 5, likelihood: 3, treatment: 'Mitigate',
+        description: `Insufficient segmentation creates a realistic path for an attacker who gains a foothold on a corporate endpoint to reach production systems. The most material scenario is a ransomware actor encrypting both corporate file shares and production-supporting services in a single intrusion.`,
+      },
+      recommendation: {
+        title: 'Implement enforced network segmentation between IT and OT/production',
+        priority: 'P1', effort: 'L', costBand: '£100–500k', horizon: '6–12m',
+        description: `Adopt a structured segmentation programme: (1) baseline current flows, (2) define a target zone model aligned to ISA/IEC 62443 zones-and-conduits, (3) deploy enforced controls (next-gen firewalls, software-defined micro-segmentation), (4) remove "any-any" exceptions in phased waves with a tracked exception register.`,
+        successCriteria: ['Target zone model ratified', 'Zero "any-any" rules between IT and OT zones', 'Continuous flow analytics in production'],
+      },
+    },
   ],
   'Vulnerability Management': [
     {
@@ -416,6 +488,24 @@ export const FINDINGS_BY_THEME: Record<Theme, Finding[]> = {
         description: `Aggregate AWS Inspector, Microsoft Defender for Cloud, container image scanners and IaC scanners into the central vulnerability dashboard. Apply formal SLAs equal to those for on-premise findings. Add quarterly Internal Audit verification of completeness.`,
         benefits: 'Establishes a defensible single view of vulnerability backlog across hybrid environments.',
         successCriteria: ['100% of cloud sources aggregated', 'Internal Audit issues green opinion on completeness'],
+      },
+    },
+    {
+      observation: {
+        title: 'External attack surface not actively monitored beyond annual penetration test',
+        severity: 'Medium',
+        body: `External attack surface monitoring is informal — there is no automated EASM platform in place. Internet-facing exposure is reviewed during the annual external penetration test and ad-hoc when a new service is published, but inventory is not continuously reconciled against discovery scans. Sample external reconnaissance against the public domain returned six subdomains not currently in the asset inventory.`,
+      },
+      risk: {
+        title: 'Untracked internet-exposed asset becomes initial access vector',
+        impact: 4, likelihood: 4, treatment: 'Mitigate',
+        description: `Without continuous EASM, transient or forgotten internet-exposed assets (development environments left running, decommissioned services with DNS still pointed at them, third-party SaaS subdomains) remain visible to attackers and outside the firm's protective control set. Recent threat reporting shows such assets accounting for a growing share of initial access events.`,
+      },
+      recommendation: {
+        title: 'Deploy an External Attack Surface Management capability',
+        priority: 'P2', effort: 'S', costBand: '<£25k', horizon: '0–3m',
+        description: `Procure and deploy an EASM platform (e.g. Cyberpion, Censys, Bishop Fox, Microsoft Defender for EASM). Integrate findings into the central vulnerability backlog with same SLA as cloud findings. Reconcile EASM-discovered assets to the CMDB on a weekly cadence.`,
+        successCriteria: ['EASM live and producing weekly delta reports', 'CMDB reconciliation rate ≥98%'],
       },
     },
   ],
@@ -480,6 +570,24 @@ export const FINDINGS_BY_THEME: Record<Theme, Finding[]> = {
         successCriteria: ['Live exercise executed within 6 months', 'Action register from exercise closed within 90 days post-exercise'],
       },
     },
+    {
+      observation: {
+        title: 'Incident categorisation and severity criteria not aligned to regulatory thresholds',
+        severity: 'Medium',
+        body: `Internal severity criteria (Sev-1 to Sev-4) are documented and used by the SOC, but they do not map cleanly onto regulatory notification thresholds (FCA, ICO, NIS2). The mapping is held tacitly in the Head of IR's understanding rather than codified, creating risk that a regulatory clock starts ticking before the right notifications are made.`,
+      },
+      risk: {
+        title: 'Regulatory notification window missed during a significant incident',
+        impact: 4, likelihood: 2, treatment: 'Mitigate',
+        description: `Implicit mapping between internal severity and regulatory threshold creates realistic exposure that during a fast-moving incident, the regulatory clock is not started promptly, leading to late notification and potential additional supervisory engagement on top of the underlying incident.`,
+      },
+      recommendation: {
+        title: 'Codify mapping between internal severity and regulatory notification thresholds',
+        priority: 'P2', effort: 'S', costBand: '<£25k', horizon: '0–3m',
+        description: `Produce a documented mapping between internal Sev-1..4 categories and each applicable regulatory threshold (FCA SUP 15.3.17R, NIS2 Article 23, ICO 72-hour). Wire the mapping into the IR ticketing tool so the regulator clock starts automatically when severity is set.`,
+        successCriteria: ['Mapping ratified by Legal and CISO', 'Automation in IR ticketing tool verified by tabletop exercise'],
+      },
+    },
   ],
   Recovery: [
     {
@@ -499,6 +607,24 @@ export const FINDINGS_BY_THEME: Record<Theme, Finding[]> = {
         description: `Run a controlled adversary simulation testing whether a privileged user could shorten object-lock retention or otherwise compromise the immutable backup chain. Use the outcome to harden the lock policy and the privileged path. Repeat annually as a named control test. Pair with an end-to-end tier-1 recovery exercise within the same fiscal year.`,
         benefits: 'Removes the single highest residual uncertainty in the recovery posture.',
         successCriteria: ['Simulation completed with documented outcomes', 'Hardening actions closed within 60 days', 'Tier-1 end-to-end recovery exercise completed within 12 months'],
+      },
+    },
+    {
+      observation: {
+        title: 'Post-incident communication templates not refreshed since regulatory change',
+        severity: 'Medium',
+        body: `Pre-prepared customer and regulator communication templates exist for a destructive incident, but they were last refreshed in 2023 and do not reflect changes to ICO guidance, NIS2 requirements, or the firm's revised brand voice. Templates have not been exercised in a live drill.`,
+      },
+      risk: {
+        title: 'Communication during a crisis amplifies reputational impact',
+        impact: 3, likelihood: 3, treatment: 'Mitigate',
+        description: `Stale templates risk content that is technically misaligned with current regulatory expectations or off-brand in tone, both of which amplify reputational and supervisory pressure during the recovery window.`,
+      },
+      recommendation: {
+        title: 'Refresh and exercise post-incident communication templates',
+        priority: 'P3', effort: 'S', costBand: '<£25k', horizon: '0–3m',
+        description: `Refresh templates with Legal, Communications and Compliance. Exercise in a tabletop scenario with the press lead and customer ops. Maintain versioned templates in the IR tooling.`,
+        successCriteria: ['Templates ratified by Legal and Compliance', 'Tabletop exercise with named press lead executed'],
       },
     },
   ],
@@ -522,6 +648,24 @@ export const FINDINGS_BY_THEME: Record<Theme, Finding[]> = {
         successCriteria: ['SAST coverage ≥95% of repositories', 'SCA coverage ≥95% of releases', 'Threat modelling refreshed for major releases on schedule'],
       },
     },
+    {
+      observation: {
+        title: 'API security testing reliant on application-layer SAST/SCA',
+        severity: 'Medium',
+        body: `Application security testing relies on SAST and SCA tools that catch class-level issues but do not perform API-layer fuzzing or schema-conformance testing. The firm operates 80+ internal and customer-facing APIs without dedicated DAST or API-specific tooling. Several inherited APIs from recent acquisitions have not been threat-modelled.`,
+      },
+      risk: {
+        title: 'API-layer flaw enables data exposure or business logic abuse',
+        impact: 4, likelihood: 3, treatment: 'Mitigate',
+        description: `Without API-specific testing, BOLA / IDOR style flaws, mass-assignment bugs, and broken auth at the API layer go undetected by current tooling. These have been responsible for several public breaches in adjacent firms in recent years.`,
+      },
+      recommendation: {
+        title: 'Deploy API-specific security testing tooling and threat-model inherited APIs',
+        priority: 'P2', effort: 'M', costBand: '£25–100k', horizon: '3–6m',
+        description: `Deploy an API security testing platform (e.g. Salt, Noname, 42Crunch) integrated to the API gateway. Run threat modelling sprints for inherited APIs by end of year.`,
+        successCriteria: ['API security platform live in production', 'All inherited APIs threat-modelled'],
+      },
+    },
   ],
   'Penetration Testing': [
     {
@@ -541,6 +685,24 @@ export const FINDINGS_BY_THEME: Record<Theme, Finding[]> = {
         description: `Establish a quarterly internal penetration testing programme prioritised against the threat model. Add purple team exercises twice per year. Mandate retest verification before remediation closure.`,
         benefits: 'Closes the assurance gap between annual external tests; improves confidence in remediation.',
         successCriteria: ['Quarterly programme delivering published reports', 'Retest verification rate 100% before closure'],
+      },
+    },
+    {
+      observation: {
+        title: 'Red-team capability absent; assurance limited to vulnerability-style testing',
+        severity: 'Medium',
+        body: `Existing testing addresses vulnerability discovery but not adversary emulation. The firm has not commissioned a TIBER-style or CBEST-style red team exercise, despite being in scope for those programmes given its sector.`,
+      },
+      risk: {
+        title: 'Adversary tradecraft not validated end-to-end against current controls',
+        impact: 4, likelihood: 3, treatment: 'Mitigate',
+        description: `Vulnerability-style assurance can validate the absence of certain technical flaws but cannot validate the chained effectiveness of preventive + detective + response controls under realistic adversary conditions.`,
+      },
+      recommendation: {
+        title: 'Commission a TIBER- or CBEST-style red team exercise within the next 12 months',
+        priority: 'P3', effort: 'L', costBand: '£100–500k', horizon: '6–12m',
+        description: `Commission a credentialed third-party red team exercise aligned to the firm's threat intelligence-led scenarios. Run with full executive sponsorship and post-exercise lessons capture into the security programme.`,
+        successCriteria: ['Exercise completed with executive readout', 'Action register integrated into security programme'],
       },
     },
   ],

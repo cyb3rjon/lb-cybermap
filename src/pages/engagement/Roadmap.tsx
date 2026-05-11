@@ -9,6 +9,7 @@ import { Modal } from '@/components/ui/Modal';
 import { Input, Select, Textarea } from '@/components/ui/Input';
 import { RoadmapGantt } from '@/components/charts/RoadmapGantt';
 import { RoadmapTimeline, RoadmapSummary } from '@/components/charts/RoadmapTimeline';
+import { RoadmapInsights } from '@/components/charts/RoadmapInsights';
 import { Avatar } from '@/components/ui/Avatar';
 import type { RoadmapInitiative } from '@/types';
 
@@ -106,6 +107,11 @@ export default function Roadmap() {
       <Card elevated>
         <CardHeader title="Roadmap timeline" subtitle="Initiatives plotted across a 24-month horizon, grouped by capability area. Status shown by colour, effort by dot." />
         <RoadmapTimeline initiatives={initiatives} />
+      </Card>
+
+      <Card elevated>
+        <CardHeader title="Delivery insights" subtitle="Cost outlook, delivery state and ownership distribution" />
+        <RoadmapInsights initiatives={initiatives} users={users} />
       </Card>
 
       <Card elevated>

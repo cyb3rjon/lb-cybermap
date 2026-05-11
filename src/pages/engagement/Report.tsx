@@ -35,6 +35,17 @@ const SECTIONS = [
   { key: 'appendices', label: 'Appendices' },
 ];
 
+// Pagination limits so landscape pages keep a readable font size
+const OBSERVATIONS_PER_PAGE = 3;
+const RISKS_PER_PAGE = 3;
+const RECS_PER_PAGE = 3;
+
+function chunk<T>(items: T[], size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
+  return out.length ? out : [[]];
+}
+
 export default function Report() {
   const { engagementId = '' } = useParams();
   const eng = useStore((s) => s.getEngagement(engagementId));
@@ -156,23 +167,47 @@ export default function Report() {
       </div>
 
       <div className="space-y-5 print:space-y-8">
-        {(previewAll ? SECTIONS : SECTIONS.filter((s) => s.key === active)).map((sec) => (
-          <Card elevated key={sec.key} className="report-page break-after-page">
-            {sec.key === 'cover' && <Cover client={client} fw={fw} eng={eng} lead={lead} />}
-            {sec.key === 'execSummary' && <ExecutiveSummary client={client} fw={fw} items={items} initiatives={initiatives} overall={overall} overallT={overallT} eng={eng} />}
-            {sec.key === 'footprint' && <Footprint client={client} />}
-            {sec.key === 'approach' && <Approach eng={eng} fw={fw} items={items} />}
-            {sec.key === 'scoring' && <Scoring overall={overall} overallT={overallT} fw={fw} items={items} radar={radar} aggs={aggs} heatmap={heatmap} />}
-            {sec.key === 'benchmark' && <Benchmark client={client} bars={bars} radar={radar} />}
-            {sec.key === 'observations' && <ObservationsSection observations={observations} />}
-            {sec.key === 'risks' && <RiskRegister risks={allRisks} />}
-            {sec.key === 'recommendations' && <Recommendations recs={items.flatMap((i) => i.recommendations)} />}
-            {sec.key === 'roadmap' && <Roadmap initiatives={initiatives} />}
-            {sec.key === 'qa' && <QABlock eng={eng} users={users} lead={lead} />}
-            {sec.key === 'conclusion' && <Conclusion overall={overall} overallT={overallT} client={client} />}
-            {sec.key === 'appendices' && <Appendices items={items} />}
-          </Card>
-        ))}
+        {(previewAll ? SECTIONS : SECTIONS.filter((s) => s.key === active)).flatMap((sec) => {
+          // Multi-page sections — split content into chunks so landscape font stays consistent
+          if (sec.key === 'observations') {
+            const chunks = chunk(observations, OBSERVATIONS_PER_PAGE);
+            return chunks.map((slice, idx) => (
+              <Card elevated key={`${sec.key}-${idx}`} className="report-page break-after-page">
+                <ObservationsSection observations={slice} pageNum={idx + 1} totalPages={chunks.length} totalCount={observations.length} />
+              </Card>
+            ));
+          }
+          if (sec.key === 'risks') {
+            const chunks = chunk(allRisks, RISKS_PER_PAGE);
+            return chunks.map((slice, idx) => (
+              <Card elevated key={`${sec.key}-${idx}`} className="report-page break-after-page">
+                <RiskRegister risks={slice} pageNum={idx + 1} totalPages={chunks.length} totalCount={allRisks.length} allRisks={allRisks} showMatrix={idx === 0} />
+              </Card>
+            ));
+          }
+          if (sec.key === 'recommendations') {
+            const chunks = chunk(allRecs, RECS_PER_PAGE);
+            return chunks.map((slice, idx) => (
+              <Card elevated key={`${sec.key}-${idx}`} className="report-page break-after-page">
+                <Recommendations recs={slice} pageNum={idx + 1} totalPages={chunks.length} totalCount={allRecs.length} />
+              </Card>
+            ));
+          }
+          return [(
+            <Card elevated key={sec.key} className="report-page break-after-page">
+              {sec.key === 'cover' && <Cover client={client} fw={fw} eng={eng} lead={lead} />}
+              {sec.key === 'execSummary' && <ExecutiveSummary client={client} fw={fw} items={items} initiatives={initiatives} overall={overall} overallT={overallT} eng={eng} />}
+              {sec.key === 'footprint' && <Footprint client={client} />}
+              {sec.key === 'approach' && <Approach eng={eng} fw={fw} items={items} />}
+              {sec.key === 'scoring' && <Scoring overall={overall} overallT={overallT} fw={fw} items={items} radar={radar} aggs={aggs} heatmap={heatmap} />}
+              {sec.key === 'benchmark' && <Benchmark client={client} bars={bars} radar={radar} />}
+              {sec.key === 'roadmap' && <Roadmap initiatives={initiatives} />}
+              {sec.key === 'qa' && <QABlock eng={eng} users={users} lead={lead} />}
+              {sec.key === 'conclusion' && <Conclusion overall={overall} overallT={overallT} client={client} />}
+              {sec.key === 'appendices' && <Appendices items={items} />}
+            </Card>
+          )];
+        })}
 
         {!previewAll && (
           <div className="flex items-center justify-between print:hidden">
@@ -322,6 +357,10 @@ function Approach({ eng, fw, items }: any) {
 function Scoring({ overall, overallT, fw, items, radar, aggs, heatmap }: any) {
   const isCIS = fw.id === 'CIS_V8_1_2';
   const groupLabel = isCIS ? 'CIS Controls' : fw.id === 'NCSC_CAF_4_0' ? 'CAF Objectives' : 'NIST Functions';
+  const groupSingular = isCIS ? 'Control' : fw.id === 'NCSC_CAF_4_0' ? 'Objective' : 'Function';
+  const itemLabel = isCIS ? 'Safeguard' : fw.id === 'NCSC_CAF_4_0' ? 'Outcome' : 'Subcategory';
+  const implementedCount = items.filter((i: any) => i.currentScore >= 3).length;
+  const implementedPct = items.length ? Math.round((implementedCount / items.length) * 100) : 0;
   return (
     <div>
       <SectionTitle eyebrow="04" title="Maturity Scoring" />
@@ -331,7 +370,7 @@ function Scoring({ overall, overallT, fw, items, radar, aggs, heatmap }: any) {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
           <div>
             <div className="text-[11px] uppercase tracking-[0.18em] text-accent-300">Overall maturity score</div>
-            <div className="text-[10px] text-slate-400 mt-0.5">Average of all {items.length} {isCIS ? 'CIS Safeguards' : 'in-scope items'} assessed</div>
+            <div className="text-[10px] text-slate-400 mt-0.5">Average of all {items.length} {itemLabel.toLowerCase()}s assessed</div>
             <div className="mt-3 flex items-baseline gap-3">
               <span className="text-6xl font-bold font-mono text-white tracking-tight">{overall.toFixed(1)}</span>
               <span className="text-2xl text-slate-400">/ 5</span>
@@ -341,33 +380,50 @@ function Scoring({ overall, overallT, fw, items, radar, aggs, heatmap }: any) {
               <span className="font-mono text-cyan-400 text-lg">{overallT.toFixed(1)} / 5</span>
               <span className="text-[11px] text-slate-500">(+{(overallT - overall).toFixed(1)} uplift)</span>
             </div>
+            <div className="mt-3 pt-3 border-t border-navy-700/50">
+              <div className="text-[10px] uppercase tracking-wider text-slate-400">Implementation</div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-emerald-300 font-mono text-2xl">{implementedCount}</span>
+                <span className="text-xs text-slate-500">/ {items.length} implemented · {implementedPct}%</span>
+              </div>
+              <div className="text-[10px] text-slate-500">(safeguards with score ≥ 3)</div>
+            </div>
           </div>
 
           <div className="md:col-span-2">
-            <div className="text-[11px] uppercase tracking-wider text-slate-400 mb-2">Per-{isCIS ? 'control' : 'group'} averages — {groupLabel}</div>
+            <div className="text-[11px] uppercase tracking-wider text-slate-400 mb-2">{groupSingular} scores — {groupLabel}</div>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-              {aggs.map((a: any) => (
-                <div key={a.groupCode} className="rounded-md border border-navy-700/60 bg-navy-900/40 px-2.5 py-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-mono text-[10px] text-slate-500">{a.groupCode}</span>
-                    <span className="text-[10px] text-slate-500">{a.count} item{a.count === 1 ? '' : 's'}</span>
+              {aggs.map((a: any) => {
+                const grp = fw.groups.find((g: any) => g.code === a.groupCode);
+                const groupItems = items.filter((i: any) => {
+                  const flat = grp?.categories.flatMap((c: any) => c.items) || [];
+                  return flat.some((x: any) => x.id === i.itemId);
+                });
+                const implemented = groupItems.filter((i: any) => i.currentScore >= 3).length;
+                return (
+                  <div key={a.groupCode} className="rounded-md border border-navy-700/60 bg-navy-900/40 px-2.5 py-2">
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono text-[10px] text-slate-500">{a.groupCode}</span>
+                      <Badge tone={a.averageCurrent >= 3 ? 'ok' : 'warn'} dot>{a.averageCurrent >= 3 ? 'Imp.' : 'Not imp.'}</Badge>
+                    </div>
+                    <div className="text-[11px] font-medium text-slate-200 truncate" title={a.groupName}>{a.groupName}</div>
+                    <div className="mt-0.5 flex items-baseline gap-1.5">
+                      <span className="font-mono text-base text-white">{a.averageCurrent.toFixed(1)}</span>
+                      <span className="text-cyan-400 text-[11px]">→ {a.averageTarget.toFixed(1)}</span>
+                    </div>
+                    <div className="text-[9px] text-slate-500 mt-0.5">{implemented}/{groupItems.length} {itemLabel.toLowerCase()}s implemented</div>
                   </div>
-                  <div className="text-[11px] font-medium text-slate-200 truncate" title={a.groupName}>{a.groupName}</div>
-                  <div className="mt-0.5 flex items-baseline gap-1.5">
-                    <span className="font-mono text-base text-white">{a.averageCurrent.toFixed(1)}</span>
-                    <span className="text-cyan-400 text-[11px]">→ {a.averageTarget.toFixed(1)}</span>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
       </div>
 
-      <h4 className="text-sm font-semibold text-white mt-2 mb-2">Maturity radar — current vs target vs benchmark</h4>
+      <h4 className="text-sm font-semibold text-white mt-2 mb-2">Maturity radar — current vs target vs industry benchmark (amber)</h4>
       <MaturityRadar data={radar} height={340} />
 
-      <h4 className="text-sm font-semibold text-white mt-6 mb-2">Per-item heatmap</h4>
+      <h4 className="text-sm font-semibold text-white mt-6 mb-2">Per-{itemLabel.toLowerCase()} heatmap</h4>
       <MaturityHeatmap rows={heatmap} />
     </div>
   );
@@ -388,23 +444,26 @@ function Benchmark({ client, bars, radar }: any) {
   );
 }
 
-function ObservationsSection({ observations }: any) {
+function ObservationsSection({ observations, pageNum, totalPages, totalCount }: any) {
+  const pageInfo = totalPages && totalPages > 1 ? ` — page ${pageNum} of ${totalPages}` : '';
   return (
     <div>
-      <SectionTitle eyebrow="06" title="Key Observations" />
-      <p className="text-slate-300 mb-4">{observations.length} observation{observations.length === 1 ? '' : 's'} identified across the assessment, themed and severity-rated.</p>
+      <SectionTitle eyebrow={`06${pageInfo}`} title="Key Observations" />
+      {pageNum === 1 && (
+        <p className="text-slate-300 mb-4 text-sm">{totalCount ?? observations.length} observation{(totalCount ?? observations.length) === 1 ? '' : 's'} identified across the assessment, sorted by severity (highest first). Each observation links to exactly one safeguard.</p>
+      )}
       <div className="space-y-3">
-        {observations.slice(0, 14).map((o: any) => (
+        {observations.map((o: any) => (
           <div key={o.id} className="rounded-lg border border-navy-700/60 bg-navy-900/40 p-4">
-            <div className="flex items-center justify-between gap-2 mb-2">
-              <h5 className="text-sm font-semibold text-white">{o.title}</h5>
-              <div className="flex items-center gap-1.5">
-                <Badge tone={o.severity === 'Critical' ? 'critical' : o.severity === 'High' ? 'risk' : 'warn'}>{o.severity}</Badge>
+            <div className="flex items-start justify-between gap-2 mb-2">
+              <h5 className="text-sm font-semibold text-white leading-tight">{o.title}</h5>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <Badge tone={o.severity === 'Critical' ? 'critical' : o.severity === 'High' ? 'risk' : o.severity === 'Medium' ? 'warn' : 'muted'}>{o.severity}</Badge>
                 <Badge tone="muted">{o.theme}</Badge>
               </div>
             </div>
-            {o.body.split('\n\n').map((p: string, i: number) => (
-              <p key={i} className="text-[13px] text-slate-300 leading-relaxed mt-2 first:mt-0">{p}</p>
+            {o.body.split('\n\n').slice(0, 3).map((p: string, i: number) => (
+              <p key={i} className="text-[12px] text-slate-300 leading-relaxed mt-2 first:mt-0">{p}</p>
             ))}
           </div>
         ))}
@@ -413,30 +472,32 @@ function ObservationsSection({ observations }: any) {
   );
 }
 
-function RiskRegister({ risks }: any) {
-  const sorted = [...risks].sort((a, b) => b.inherentScore - a.inherentScore);
+function RiskRegister({ risks, pageNum, totalPages, totalCount, allRisks, showMatrix }: any) {
+  const pageInfo = totalPages && totalPages > 1 ? ` — page ${pageNum} of ${totalPages}` : '';
   return (
     <div>
-      <SectionTitle eyebrow="07" title="Risk Register" />
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5">
-        <div className="lg:col-span-2 rounded-lg border border-navy-700/60 bg-navy-900/40 p-3">
-          <RiskMatrix risks={risks.map((r: any) => ({ id: r.id, title: r.title, impact: r.impact, likelihood: r.likelihood }))} />
+      <SectionTitle eyebrow={`07${pageInfo}`} title="Risk Register" />
+      {showMatrix && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5">
+          <div className="lg:col-span-2 rounded-lg border border-navy-700/60 bg-navy-900/40 p-3">
+            <RiskMatrix risks={(allRisks || risks).map((r: any) => ({ id: r.id, title: r.title, impact: r.impact, likelihood: r.likelihood }))} />
+          </div>
+          <div className="space-y-2">
+            <Stat label="Total risks" value={(totalCount ?? risks.length).toString()} />
+            <Stat label="Critical (≥16)" value={(allRisks || risks).filter((r: any) => r.inherentScore >= 16).length.toString()} tone="risk" />
+            <Stat label="High (9–15)" value={(allRisks || risks).filter((r: any) => r.inherentScore >= 9 && r.inherentScore < 16).length.toString()} tone="warn" />
+          </div>
         </div>
-        <div className="space-y-2">
-          <Stat label="Total risks" value={risks.length.toString()} />
-          <Stat label="Critical (≥16)" value={risks.filter((r: any) => r.inherentScore >= 16).length.toString()} tone="risk" />
-          <Stat label="High (9–15)" value={risks.filter((r: any) => r.inherentScore >= 9 && r.inherentScore < 16).length.toString()} tone="warn" />
-        </div>
-      </div>
+      )}
       <div className="space-y-3">
-        {sorted.slice(0, 12).map((r: any) => (
+        {risks.map((r: any) => (
           <div key={r.id} className="rounded-lg border border-navy-700/60 bg-navy-900/40 p-4">
-            <div className="flex items-center justify-between gap-2 mb-1">
-              <h5 className="text-sm font-semibold text-white">{r.title}</h5>
+            <div className="flex items-start justify-between gap-2 mb-1">
+              <h5 className="text-sm font-semibold text-white leading-tight">{r.title}</h5>
               <Badge tone={r.inherentScore >= 16 ? 'critical' : r.inherentScore >= 9 ? 'risk' : 'warn'} dot>Score {r.inherentScore}</Badge>
             </div>
             {r.description.split('\n\n').slice(0, 2).map((p: string, i: number) => (
-              <p key={i} className="text-[13px] text-slate-300 leading-relaxed mt-2 first:mt-0">{p}</p>
+              <p key={i} className="text-[12px] text-slate-300 leading-relaxed mt-2 first:mt-0">{p}</p>
             ))}
             <div className="mt-2 text-[11px] text-slate-500">Impact {r.impact} · Likelihood {r.likelihood} · Treatment {r.treatment}</div>
           </div>
@@ -446,32 +507,34 @@ function RiskRegister({ risks }: any) {
   );
 }
 
-function Recommendations({ recs }: any) {
-  const sorted = [...recs].sort((a: any, b: any) => a.priority.localeCompare(b.priority));
+function Recommendations({ recs, pageNum, totalPages, totalCount }: any) {
+  const pageInfo = totalPages && totalPages > 1 ? ` — page ${pageNum} of ${totalPages}` : '';
   return (
     <div>
-      <SectionTitle eyebrow="08" title="Improvement Recommendations" />
-      <p className="text-slate-300 mb-4">{recs.length} recommendation{recs.length === 1 ? '' : 's'} proposed, prioritised P1–P4 with effort, cost band and delivery horizon.</p>
+      <SectionTitle eyebrow={`08${pageInfo}`} title="Improvement Recommendations" />
+      {pageNum === 1 && (
+        <p className="text-slate-300 mb-4 text-sm">{totalCount ?? recs.length} recommendation{(totalCount ?? recs.length) === 1 ? '' : 's'} proposed, prioritised P1–P4 with effort, cost band and delivery horizon. Each recommendation is paired to a specific observation.</p>
+      )}
       <div className="space-y-3">
-        {sorted.slice(0, 14).map((r: any) => (
+        {recs.map((r: any) => (
           <div key={r.id} className="rounded-lg border border-navy-700/60 bg-navy-900/40 p-4">
-            <div className="flex items-center justify-between gap-2 mb-1">
-              <h5 className="text-sm font-semibold text-white">{r.title}</h5>
-              <div className="flex items-center gap-1.5">
+            <div className="flex items-start justify-between gap-2 mb-1">
+              <h5 className="text-sm font-semibold text-white leading-tight">{r.title}</h5>
+              <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
                 <Badge tone={r.priority === 'P1' ? 'critical' : r.priority === 'P2' ? 'risk' : 'warn'}>{r.priority}</Badge>
                 <Badge tone="cyan">{r.horizon}</Badge>
                 <Badge tone="muted">{r.costBand}</Badge>
                 <Badge tone="info">Effort {r.effort}</Badge>
               </div>
             </div>
-            {r.description.split('\n\n').slice(0, 3).map((p: string, i: number) => (
-              <p key={i} className="text-[13px] text-slate-300 leading-relaxed mt-2 first:mt-0 whitespace-pre-line">{p}</p>
+            {r.description.split('\n\n').slice(0, 2).map((p: string, i: number) => (
+              <p key={i} className="text-[12px] text-slate-300 leading-relaxed mt-2 first:mt-0 whitespace-pre-line">{p}</p>
             ))}
             {r.benefits && <p className="text-[12px] text-emerald-200 mt-2"><span className="text-[10px] uppercase tracking-wider text-emerald-300/70 mr-2">Benefits</span>{r.benefits}</p>}
             {r.successCriteria && r.successCriteria.length > 0 && (
               <ul className="mt-2 space-y-0.5">
-                {r.successCriteria.map((s: string, i: number) => (
-                  <li key={i} className="text-[12px] text-cyan-100 flex items-start gap-1.5"><span className="mt-1 h-1 w-1 rounded-full bg-cyan-400" /><span>{s}</span></li>
+                {r.successCriteria.slice(0, 3).map((s: string, i: number) => (
+                  <li key={i} className="text-[11px] text-cyan-100 flex items-start gap-1.5"><span className="mt-1 h-1 w-1 rounded-full bg-cyan-400" /><span>{s}</span></li>
                 ))}
               </ul>
             )}

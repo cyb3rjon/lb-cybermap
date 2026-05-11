@@ -1,62 +1,100 @@
 import type { BenchmarkSnapshot, FrameworkId } from '@/types';
 
-// Industry / country / size-band benchmark percentiles (illustrative).
-// Indexed by group code from the relevant framework.
-
+// Group codes per framework
 const NIST_GROUPS = ['GV', 'ID', 'PR', 'DE', 'RS', 'RC'];
 const CIS_GROUPS = ['01','02','03','04','05','06','07','08','09','10','11','12','13','14','15','16','17','18'];
 const CAF_GROUPS = ['A', 'B', 'C', 'D'];
 
+function bandFor(framework: FrameworkId): string[] {
+  if (framework === 'NIST_CSF_2_0') return NIST_GROUPS;
+  if (framework === 'CIS_V8_1_2') return CIS_GROUPS;
+  return CAF_GROUPS;
+}
+
+/**
+ * Build a benchmark snapshot from an average value with natural per-group variation.
+ * Variation is small (±0.25) so a cohort average around 2.7 yields per-group values 2.45–2.95.
+ */
 function buildSnapshot(
   scope: BenchmarkSnapshot['scope'],
   scopeValue: string,
   framework: FrameworkId,
-  groups: string[],
-  baseline: Record<string, number>,
+  averageOverall: number,
   cohortSize: number,
 ): BenchmarkSnapshot {
+  const groups = bandFor(framework);
   const averageByGroup: Record<string, number> = {};
   const topQuartileByGroup: Record<string, number> = {};
   const bottomQuartileByGroup: Record<string, number> = {};
-  for (const g of groups) {
-    const avg = baseline[g] ?? 2.6;
-    averageByGroup[g] = +avg.toFixed(2);
-    topQuartileByGroup[g] = +(Math.min(5, avg + 0.9)).toFixed(2);
-    bottomQuartileByGroup[g] = +(Math.max(0, avg - 0.9)).toFixed(2);
+  for (let i = 0; i < groups.length; i++) {
+    const offset = ((i % 5) - 2) * 0.12;
+    const avg = +Math.min(4.6, Math.max(0.5, averageOverall + offset)).toFixed(2);
+    averageByGroup[groups[i]] = avg;
+    topQuartileByGroup[groups[i]] = +Math.min(5, avg + 0.9).toFixed(2);
+    bottomQuartileByGroup[groups[i]] = +Math.max(0, avg - 0.9).toFixed(2);
   }
   return { scope, scopeValue, framework, averageByGroup, topQuartileByGroup, bottomQuartileByGroup, cohortSize };
 }
 
-export const MOCK_BENCHMARKS: BenchmarkSnapshot[] = [
-  buildSnapshot('industry', 'Financial Services', 'NIST_CSF_2_0', NIST_GROUPS,
-    { GV: 3.1, ID: 2.9, PR: 3.0, DE: 2.7, RS: 2.8, RC: 2.6 }, 38),
-  buildSnapshot('industry', 'Healthcare', 'NIST_CSF_2_0', NIST_GROUPS,
-    { GV: 2.4, ID: 2.5, PR: 2.6, DE: 2.2, RS: 2.3, RC: 2.1 }, 26),
-  buildSnapshot('industry', 'Energy & Utilities', 'NIST_CSF_2_0', NIST_GROUPS,
-    { GV: 2.7, ID: 2.8, PR: 2.7, DE: 2.5, RS: 2.5, RC: 2.4 }, 19),
-  buildSnapshot('industry', 'Retail', 'NIST_CSF_2_0', NIST_GROUPS,
-    { GV: 2.5, ID: 2.6, PR: 2.7, DE: 2.4, RS: 2.5, RC: 2.3 }, 22),
-  buildSnapshot('country', 'United Kingdom', 'NIST_CSF_2_0', NIST_GROUPS,
-    { GV: 2.8, ID: 2.7, PR: 2.8, DE: 2.5, RS: 2.6, RC: 2.4 }, 110),
-  buildSnapshot('global', 'All', 'NIST_CSF_2_0', NIST_GROUPS,
-    { GV: 2.6, ID: 2.5, PR: 2.6, DE: 2.3, RS: 2.4, RC: 2.2 }, 240),
-  buildSnapshot('size-band', 'Enterprise', 'NIST_CSF_2_0', NIST_GROUPS,
-    { GV: 3.2, ID: 3.0, PR: 3.1, DE: 2.9, RS: 2.9, RC: 2.7 }, 64),
+// Industry × framework matrix. Cohort sizes reflect typical sector representation.
+const INDUSTRY_AVG: Record<string, { avg: number; cohort: number }> = {
+  'Financial Services':     { avg: 3.1, cohort: 38 },
+  'Energy & Utilities':     { avg: 2.7, cohort: 19 },
+  'Healthcare':             { avg: 2.4, cohort: 26 },
+  'Retail':                 { avg: 2.5, cohort: 22 },
+  'Transport & Logistics':  { avg: 2.6, cohort: 14 },
+  'Manufacturing':          { avg: 2.5, cohort: 18 },
+  'Technology':             { avg: 3.2, cohort: 31 },
+  'Public Sector':          { avg: 2.6, cohort: 24 },
+  'Telecommunications':     { avg: 3.0, cohort: 17 },
+  'Pharmaceuticals':        { avg: 2.8, cohort: 12 },
+  'Insurance':              { avg: 3.0, cohort: 28 },
+};
 
-  buildSnapshot('industry', 'Healthcare', 'CIS_V8_1_2', CIS_GROUPS,
-    Object.fromEntries(CIS_GROUPS.map((g, i) => [g, 2.3 + ((i % 5) * 0.12)])), 18),
-  buildSnapshot('industry', 'Retail', 'CIS_V8_1_2', CIS_GROUPS,
-    Object.fromEntries(CIS_GROUPS.map((g, i) => [g, 2.5 + ((i % 4) * 0.15)])), 24),
-  buildSnapshot('industry', 'Manufacturing', 'CIS_V8_1_2', CIS_GROUPS,
-    Object.fromEntries(CIS_GROUPS.map((g, i) => [g, 2.4 + ((i % 6) * 0.1)])), 16),
+const COUNTRY_AVG: Record<string, { avg: number; cohort: number }> = {
+  'United Kingdom':       { avg: 2.8, cohort: 110 },
+  'Republic of Ireland':  { avg: 2.7, cohort: 14 },
+  'Germany':              { avg: 2.7, cohort: 42 },
+  'France':               { avg: 2.6, cohort: 36 },
+  'Netherlands':          { avg: 2.8, cohort: 22 },
+  'United States':        { avg: 2.9, cohort: 88 },
+};
 
-  buildSnapshot('industry', 'Energy & Utilities', 'NCSC_CAF_4_0', CAF_GROUPS,
-    { A: 2.8, B: 2.7, C: 2.5, D: 2.4 }, 14),
-  buildSnapshot('industry', 'Transport & Logistics', 'NCSC_CAF_4_0', CAF_GROUPS,
-    { A: 2.6, B: 2.5, C: 2.3, D: 2.2 }, 11),
-  buildSnapshot('country', 'United Kingdom', 'NCSC_CAF_4_0', CAF_GROUPS,
-    { A: 2.7, B: 2.7, C: 2.5, D: 2.4 }, 42),
-];
+const SIZE_AVG: Record<string, { avg: number; cohort: number }> = {
+  'Small':       { avg: 2.0, cohort: 18 },
+  'Mid-market':  { avg: 2.5, cohort: 46 },
+  'Large':       { avg: 2.9, cohort: 72 },
+  'Enterprise':  { avg: 3.2, cohort: 64 },
+};
+
+const GLOBAL_AVG: Record<FrameworkId, { avg: number; cohort: number }> = {
+  NIST_CSF_2_0: { avg: 2.6, cohort: 240 },
+  CIS_V8_1_2:   { avg: 2.5, cohort: 190 },
+  NCSC_CAF_4_0: { avg: 2.6, cohort: 95 },
+};
+
+const FRAMEWORKS: FrameworkId[] = ['NIST_CSF_2_0', 'CIS_V8_1_2', 'NCSC_CAF_4_0'];
+
+// Generate the full cartesian product of benchmarks.
+function makeAll(): BenchmarkSnapshot[] {
+  const out: BenchmarkSnapshot[] = [];
+
+  for (const fw of FRAMEWORKS) {
+    for (const [industry, { avg, cohort }] of Object.entries(INDUSTRY_AVG)) {
+      out.push(buildSnapshot('industry', industry, fw, avg, cohort));
+    }
+    for (const [country, { avg, cohort }] of Object.entries(COUNTRY_AVG)) {
+      out.push(buildSnapshot('country', country, fw, avg, cohort));
+    }
+    for (const [size, { avg, cohort }] of Object.entries(SIZE_AVG)) {
+      out.push(buildSnapshot('size-band', size, fw, avg, cohort));
+    }
+    out.push(buildSnapshot('global', 'All', fw, GLOBAL_AVG[fw].avg, GLOBAL_AVG[fw].cohort));
+  }
+  return out;
+}
+
+export const MOCK_BENCHMARKS: BenchmarkSnapshot[] = makeAll();
 
 export function findBenchmark(
   scope: BenchmarkSnapshot['scope'],
@@ -66,4 +104,12 @@ export function findBenchmark(
   return MOCK_BENCHMARKS.find(
     (b) => b.scope === scope && b.scopeValue === scopeValue && b.framework === framework,
   );
+}
+
+/** Calculate cohort average across all groups in a benchmark. Returns null if not available. */
+export function cohortAverage(b: BenchmarkSnapshot | undefined): number | null {
+  if (!b) return null;
+  const values = Object.values(b.averageByGroup);
+  if (!values.length) return null;
+  return +(values.reduce((a, c) => a + c, 0) / values.length).toFixed(2);
 }

@@ -330,14 +330,43 @@ export const useStore = create<AppState>()(
         const eng = get().engagements.find((e) => e.id === engagementId);
         if (!eng) return 0;
         const items = get().assessmentItemsByEngagement[engagementId] || [];
-        let generated = 0;
-        const next = items.map((ai, idx) => {
-          if (ai.observations.length > 0) return ai; // already has a finding
-          if (ai.currentScore > 3) return ai; // strong items don't need a finding
+
+        // Determine in-use observation titles already on the engagement so we never
+        // re-emit the same finding text against another safeguard.
+        const usedTitles = new Set<string>();
+        for (const ai of items) for (const o of ai.observations) usedTitles.add(o.title);
+
+        // Group candidates by theme — only items with a low score and no existing finding qualify.
+        const byTheme: Record<string, typeof items> = {};
+        for (const ai of items) {
+          if (ai.observations.length > 0) continue;
+          if (ai.currentScore > 3) continue;
           const theme = themeForItem(ai.itemId, eng.framework);
-          const pool = FINDINGS_BY_THEME[theme] || [];
-          if (!pool.length) return ai;
-          const f = pool[idx % pool.length];
+          (byTheme[theme] ||= []).push(ai);
+        }
+
+        const assignments = new Map<string, Finding>();
+        for (const [theme, candidates] of Object.entries(byTheme)) {
+          const pool = (FINDINGS_BY_THEME[theme as keyof typeof FINDINGS_BY_THEME] || [])
+            .filter((f) => !usedTitles.has(f.observation.title));
+          if (pool.length === 0) continue;
+          const sorted = [...candidates].sort(
+            (a, b) => a.currentScore - b.currentScore || a.itemId.localeCompare(b.itemId),
+          );
+          const n = Math.min(sorted.length, pool.length);
+          for (let i = 0; i < n; i++) {
+            assignments.set(sorted[i].itemId, pool[i]);
+            usedTitles.add(pool[i].observation.title);
+          }
+        }
+
+        if (assignments.size === 0) return 0;
+
+        let generated = 0;
+        const next = items.map((ai) => {
+          const f = assignments.get(ai.itemId);
+          if (!f) return ai;
+          const theme = themeForItem(ai.itemId, eng.framework);
           const obsId = newId('ob');
           const observation: Observation = {
             id: obsId,
@@ -573,7 +602,7 @@ export const useStore = create<AppState>()(
     }),
     {
       name: 'lb-cybermap',
-      version: 3,
+      version: 4,
       migrate: (_persisted, _v) => initialState() as any,
       partialize: (s) => ({
         filters: s.filters,

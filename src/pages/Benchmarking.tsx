@@ -11,7 +11,7 @@ import { PercentileBand } from '@/components/charts/PercentileBand';
 import { buildBenchmarkSeries, buildRadarSeries, overallAverage } from '@/lib/aggregations';
 import { FRAMEWORKS } from '@/data/frameworks';
 import type { FrameworkId } from '@/types';
-import { findBenchmark } from '@/data/mock-benchmarks';
+import { findBenchmark, cohortAverage as cohortAvgFromBench } from '@/data/mock-benchmarks';
 
 export default function Benchmarking() {
   const engagements = useStore((s) => s.engagements);
@@ -51,7 +51,9 @@ export default function Benchmarking() {
   }, [eng, client, engagements, clients, items]);
 
   const myOverall = useMemo(() => eng ? overallAverage(ais) : 0, [eng, ais]);
-  const cohortAverage = bm ? Object.values(bm.averageByGroup).reduce((a, b) => a + b, 0) / Object.values(bm.averageByGroup).length : 0;
+  const cohortAvg = cohortAvgFromBench(bm);
+  const cohortAverage = cohortAvg ?? 0;
+  const hasCohort = cohortAvg !== null;
   const ranking = peers.filter((p) => p.overall > myOverall).length + 1;
   const totalRanked = peers.length + 1;
   const percentile = totalRanked > 1 ? Math.round((1 - (ranking - 1) / totalRanked) * 100) : 50;
@@ -97,9 +99,9 @@ export default function Benchmarking() {
           <>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <Stat label="Overall maturity" value={myOverall.toFixed(1)} sub="/ 5" tone="accent" />
-              <Stat label="Cohort average" value={cohortAverage.toFixed(1)} sub="/ 5" tone="muted" />
-              <Stat label="Gap to cohort" value={(myOverall - cohortAverage).toFixed(1)} sub="" tone={myOverall >= cohortAverage ? 'ok' : 'warn'}
-                icon={myOverall >= cohortAverage ? TrendingUp : TrendingDown} />
+              <Stat label="Cohort average" value={hasCohort ? cohortAverage.toFixed(1) : '—'} sub={hasCohort ? '/ 5' : 'no cohort data'} tone="muted" />
+              <Stat label="Gap to cohort" value={hasCohort ? (myOverall - cohortAverage).toFixed(1) : '—'} sub="" tone={hasCohort ? (myOverall >= cohortAverage ? 'ok' : 'warn') : 'muted'}
+                icon={hasCohort ? (myOverall >= cohortAverage ? TrendingUp : TrendingDown) : undefined} />
               <Stat label="Percentile rank" value={`${percentile}`} sub={`th of ${totalRanked}`} tone="cyan" icon={Award} />
             </div>
 
@@ -155,32 +157,36 @@ export default function Benchmarking() {
 
             <Card elevated>
               <CardHeader title="Gap analysis — strongest and weakest groups vs cohort" />
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div>
-                  <div className="text-[11px] text-emerald-300 uppercase tracking-wider mb-2">Strengths</div>
-                  {[...bars].sort((a, b) => (b.current - b.benchmark) - (a.current - a.benchmark)).slice(0, 3).map((b) => (
-                    <div key={b.axis} className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-3 py-2 mb-2">
-                      <div className="flex items-center justify-between">
-                        <div className="text-sm text-white">{b.axis}</div>
-                        <div className="font-mono text-xs text-emerald-300">+{(b.current - b.benchmark).toFixed(1)} vs avg</div>
+              {!hasCohort ? (
+                <div className="text-sm text-slate-400 py-4">No cohort data for {scope}: {scopeValue}. Choose a different cohort scope above to see comparisons.</div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div>
+                    <div className="text-[11px] text-emerald-300 uppercase tracking-wider mb-2">Strengths</div>
+                    {[...bars].filter((b) => b.current >= b.benchmark).sort((a, b) => (b.current - b.benchmark) - (a.current - a.benchmark)).slice(0, 3).map((b) => (
+                      <div key={b.axis} className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-3 py-2 mb-2">
+                        <div className="flex items-center justify-between">
+                          <div className="text-sm text-white">{b.axis}</div>
+                          <div className="font-mono text-xs text-emerald-300">+{(b.current - b.benchmark).toFixed(1)} vs avg</div>
+                        </div>
+                        <div className="text-[11px] text-slate-400">Client {b.current.toFixed(1)} vs cohort {b.benchmark.toFixed(1)} · upper-quartile {b.topQuartile.toFixed(1)}</div>
                       </div>
-                      <div className="text-[11px] text-slate-400">Client {b.current.toFixed(1)} vs cohort {b.benchmark.toFixed(1)} · upper-quartile {b.topQuartile.toFixed(1)}</div>
-                    </div>
-                  ))}
-                </div>
-                <div>
-                  <div className="text-[11px] text-amber-300 uppercase tracking-wider mb-2">Improvement areas</div>
-                  {[...bars].sort((a, b) => (a.current - a.benchmark) - (b.current - b.benchmark)).slice(0, 3).map((b) => (
-                    <div key={b.axis} className="rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2 mb-2">
-                      <div className="flex items-center justify-between">
-                        <div className="text-sm text-white">{b.axis}</div>
-                        <div className="font-mono text-xs text-amber-300">{(b.current - b.benchmark).toFixed(1)} vs avg</div>
+                    ))}
+                  </div>
+                  <div>
+                    <div className="text-[11px] text-amber-300 uppercase tracking-wider mb-2">Improvement areas</div>
+                    {[...bars].filter((b) => b.current < b.benchmark).sort((a, b) => (a.current - a.benchmark) - (b.current - b.benchmark)).slice(0, 3).map((b) => (
+                      <div key={b.axis} className="rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2 mb-2">
+                        <div className="flex items-center justify-between">
+                          <div className="text-sm text-white">{b.axis}</div>
+                          <div className="font-mono text-xs text-amber-300">{(b.current - b.benchmark).toFixed(1)} vs avg</div>
+                        </div>
+                        <div className="text-[11px] text-slate-400">Client {b.current.toFixed(1)} vs cohort {b.benchmark.toFixed(1)} · lower-quartile {b.bottomQuartile.toFixed(1)}</div>
                       </div>
-                      <div className="text-[11px] text-slate-400">Client {b.current.toFixed(1)} vs cohort {b.benchmark.toFixed(1)} · lower-quartile {b.bottomQuartile.toFixed(1)}</div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
             </Card>
           </>
         )}

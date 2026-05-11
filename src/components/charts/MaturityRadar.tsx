@@ -17,11 +17,25 @@ export function MaturityRadar({ data, height = 320, showBenchmark = true }: { da
               <stop offset="100%" stopColor="#06B6D4" stopOpacity={0.0} />
             </linearGradient>
           </defs>
+          <defs>
+            <linearGradient id="benchmarkFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#F59E0B" stopOpacity={0.18} />
+              <stop offset="100%" stopColor="#F59E0B" stopOpacity={0.0} />
+            </linearGradient>
+          </defs>
           <PolarGrid stroke="#1B3358" />
           <PolarAngleAxis dataKey="axis" tick={{ fill: '#94A3B8', fontSize: 11, fontWeight: 500 }} />
           <PolarRadiusAxis angle={90} domain={[0, 5]} tick={{ fill: '#475569', fontSize: 10 }} stroke="#1B3358" />
           {showBenchmark && (
-            <Radar name="Industry benchmark" dataKey="benchmark" stroke="#475569" strokeDasharray="4 4" fill="none" />
+            <Radar
+              name="Industry benchmark"
+              dataKey="benchmark"
+              stroke="#F59E0B"
+              strokeWidth={2}
+              strokeDasharray="6 4"
+              fill="url(#benchmarkFill)"
+              dot={{ stroke: '#F59E0B', strokeWidth: 1.5, fill: '#0A1628', r: 2.5 }}
+            />
           )}
           <Radar name="Target" dataKey="target" stroke="#06B6D4" strokeWidth={2} fill="url(#targetFill)" />
           <Radar name="Current" dataKey="current" stroke="#3B82F6" strokeWidth={2.4} fill="url(#currentFill)" />

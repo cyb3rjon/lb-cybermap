@@ -28,6 +28,7 @@ export default function NewClient() {
     regulatoryRegimes: '',
     criticalProcesses: '',
     dataClassifications: 'Public, Internal, Confidential',
+    businessNotes: '',
     cloudProviders: 'AWS',
     identityProviders: 'Microsoft Entra ID',
     keyPlatforms: '',
@@ -37,6 +38,7 @@ export default function NewClient() {
     internetFacingAssets: 25,
     saasApps: 50,
     ot: false,
+    techNotes: '',
   });
 
   const list = (s: string) => s.split(',').map((x) => x.trim()).filter(Boolean);
@@ -58,6 +60,7 @@ export default function NewClient() {
         regulatoryRegimes: list(form.regulatoryRegimes),
         criticalProcesses: list(form.criticalProcesses),
         dataClassifications: list(form.dataClassifications),
+        notes: form.businessNotes.trim() || undefined,
       },
       techFootprint: {
         cloudProviders: list(form.cloudProviders),
@@ -67,6 +70,7 @@ export default function NewClient() {
         internetFacingAssets: form.internetFacingAssets,
         saasApps: form.saasApps,
         ot: form.ot,
+        notes: form.techNotes.trim() || undefined,
       },
     });
     nav('/clients', { state: { created: id } });
@@ -123,6 +127,15 @@ export default function NewClient() {
               <Input label="Regulatory regimes" value={form.regulatoryRegimes} onChange={(e) => setForm({ ...form, regulatoryRegimes: e.target.value })} placeholder="FCA, GDPR, PCI DSS" />
               <Input label="Critical processes" value={form.criticalProcesses} onChange={(e) => setForm({ ...form, criticalProcesses: e.target.value })} placeholder="Payments, Onboarding, Settlement" />
               <Input label="Data classifications" value={form.dataClassifications} onChange={(e) => setForm({ ...form, dataClassifications: e.target.value })} className="md:col-span-2" />
+              <div className="md:col-span-2">
+                <Textarea
+                  label="Business footprint notes"
+                  rows={4}
+                  value={form.businessNotes}
+                  onChange={(e) => setForm({ ...form, businessNotes: e.target.value })}
+                  placeholder="Free text — anything else that helps describe the business: M&A activity, joint ventures, recent organisational change, sensitivities, internal terminology, etc."
+                />
+              </div>
             </div>
           </Card>
 
@@ -139,6 +152,15 @@ export default function NewClient() {
               <Input label="SaaS applications" type="number" value={form.saasApps} onChange={(e) => setForm({ ...form, saasApps: Number(e.target.value) })} />
               <Select label="Operational technology in scope" value={form.ot ? 'yes' : 'no'} onChange={(e) => setForm({ ...form, ot: e.target.value === 'yes' })}
                 options={[{ value: 'no', label: 'No' }, { value: 'yes', label: 'Yes' }]} />
+              <div className="md:col-span-2">
+                <Textarea
+                  label="Technology footprint notes"
+                  rows={4}
+                  value={form.techNotes}
+                  onChange={(e) => setForm({ ...form, techNotes: e.target.value })}
+                  placeholder="Free text — additional context on the estate: legacy platforms, planned migrations, segmentation patterns, known constraints, regulatory accreditations of the stack, etc."
+                />
+              </div>
             </div>
           </Card>
         </div>

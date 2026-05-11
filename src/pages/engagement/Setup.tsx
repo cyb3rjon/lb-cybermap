@@ -59,7 +59,7 @@ export default function Setup() {
               <Avatar initials={lead.initials} colour={lead.avatarColour} />
               <div>
                 <div className="text-sm font-semibold text-white">{lead.name}</div>
-                <div className="text-[11px] text-cyan-400">Lead Assessor</div>
+                <div className="text-[11px] text-cyan-400">{lead.role} · Engagement lead</div>
               </div>
             </div>
             <div className="border-t border-navy-700/50 pt-3 space-y-2">

@@ -17,7 +17,9 @@ export default function QAReview() {
   const items = useStore((s) => s.getAssessmentItems(engagementId));
   const initiatives = useStore((s) => s.getRoadmap(engagementId));
   const users = useStore((s) => s.users);
-  const reviewers = users.filter((u) => u.role === 'Reviewer' || u.role === 'Admin');
+  const reviewers = users.filter((u) =>
+    (u.role === 'Engagement Manager' || u.role === 'Senior Consultant') && u.id !== eng?.leadAssessor,
+  );
   const setQASignOff = useStore((s) => s.setQASignOff);
   const setStatus = useStore((s) => s.setEngagementStatus);
   const bumpVersion = useStore((s) => s.bumpReportVersion);
@@ -64,7 +66,7 @@ export default function QAReview() {
         <CardHeader
           icon={<ShieldCheck size={16} />}
           title="QA review and sign-off"
-          subtitle="Independent review by a Reviewer / Admin role before the report is issued. The engagement progresses to 100% (Signed Off) only on approval."
+          subtitle="Independent review by an Engagement Manager (or another Senior Consultant) before the report is issued. The engagement progresses to 100% (Signed Off) only on approval."
           actions={<Badge tone={eng.status === 'Signed Off' ? 'ok' : 'warn'} dot>{eng.status} · {progressFromStatus(eng.status)}%</Badge>}
         />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
