@@ -48,11 +48,6 @@ export default function Dashboard() {
         eyebrow="Portfolio"
         title="Welcome back, Jon"
         description="Six engagements in flight across financial services, energy, healthcare, retail, logistics and manufacturing."
-        actions={
-          <Link to="/engagements/new" className="btn-primary">
-            <Sparkles size={15} /> Start an engagement
-          </Link>
-        }
       />
 
       <div className="px-6 lg:px-8 py-6 space-y-6">

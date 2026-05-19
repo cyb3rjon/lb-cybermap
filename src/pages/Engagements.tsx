@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Filter, Briefcase } from 'lucide-react';
+import { Filter, Briefcase } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card } from '@/components/ui/Card';
@@ -48,11 +48,6 @@ export default function Engagements() {
         eyebrow="Workspace"
         title="Engagements"
         description={`${filtered.length} of ${engagements.length} engagements shown.`}
-        actions={
-          <Link to="/engagements/new" className="btn-primary">
-            <Plus size={15} /> New engagement
-          </Link>
-        }
       />
 
       <div className="px-6 lg:px-8 py-6 space-y-5">
